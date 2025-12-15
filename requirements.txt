@@ -11,3 +11,4 @@ drf-yasg # Optional: for API documentation
 gunicorn
 dj-database-url
 whitenoise
+cloudinary
