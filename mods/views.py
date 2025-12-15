@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters, status, decorators
+from rest_framework import viewsets, filters, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -11,7 +11,7 @@ from .services import check_compatibility
 
 class ModViewSet(viewsets.ModelViewSet):
     serializer_class = ModSerializer
-    queryset = Mod.objects.filter(is_approved=True)
+    # Only show approved mods to public, but allow authors to see their own pending mods
     permission_classes = [IsAuthenticatedOrReadOnly]
     
     filterset_class = ModFilter
@@ -24,11 +24,22 @@ class ModViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Staff see everything
         if user.is_staff:
             return Mod.objects.all()
+        # Authenticated users see approved mods + their own (pending/draft)
         if user.is_authenticated:
             return Mod.objects.filter(is_approved=True) | Mod.objects.filter(author=user)
+        # Guests only see approved mods
         return Mod.objects.filter(is_approved=True)
+
+    def perform_create(self, serializer):
+        # Auto-assign author and set status to pending
+        serializer.save(
+            author=self.request.user, 
+            status='pending', 
+            is_approved=False
+        )
 
     @action(detail=True, methods=['post'])
     def track_download(self, request, pk=None):
@@ -45,16 +56,11 @@ class ModViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         mod = self.get_object()
         mod.is_approved = True
+        mod.status = 'published'
         mod.approved_by = request.user
         mod.save()
         return Response({'status': 'approved'})
 
-    @action(detail=False, methods=['post'], url_path='bulk-delete', permission_classes=[IsAdminUser])
-    def bulk_delete(self, request):
-        ids = request.data.get('ids', [])
-        Mod.objects.filter(id__in=ids).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
     @action(detail=False, methods=['get'])
     def suggestions(self, request):
         query = request.query_params.get('q', '')

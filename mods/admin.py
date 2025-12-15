@@ -7,19 +7,20 @@ class ModImageInline(admin.TabularInline):
 
 @admin.register(Mod)
 class ModAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'author', 'status', 'download_count', 'average_rating')
-    list_filter = ('status', 'category', 'game_versions', 'created_at')
+    list_display = ('title', 'category', 'author', 'status', 'is_approved', 'created_at')
+    list_filter = ('status', 'is_approved', 'category', 'created_at')
     search_fields = ('title', 'description', 'author__username')
     prepopulated_fields = {'slug': ('title',)}
     inlines = [ModImageInline]
-    filter_horizontal = ('game_versions', 'required_dlcs')
     actions = ['approve_mods', 'reject_mods']
 
+    @admin.action(description='Approve selected mods')
     def approve_mods(self, request, queryset):
-        queryset.update(status='published')
+        queryset.update(status='published', is_approved=True, approved_by=request.user)
     
+    @admin.action(description='Reject selected mods')
     def reject_mods(self, request, queryset):
-        queryset.update(status='rejected')
+        queryset.update(status='rejected', is_approved=False)
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
