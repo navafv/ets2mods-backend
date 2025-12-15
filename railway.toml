@@ -3,6 +3,6 @@ builder = "dockerfile"
 
 [deploy]
 startCommand = "/app/entrypoint.sh"
-healthcheckPath = "/"
+healthcheckPath = "/admin/login/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
