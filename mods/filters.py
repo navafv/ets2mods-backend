@@ -8,7 +8,7 @@ class ModFilter(django_filters.FilterSet):
     game_version = django_filters.CharFilter(field_name='game_versions__version')
     author = django_filters.CharFilter(field_name='author__username')
     
-    # Custom search to handle full-text search better than standard DRF
+    # Custom search
     q = django_filters.CharFilter(method='filter_search')
 
     class Meta:
@@ -16,15 +16,11 @@ class ModFilter(django_filters.FilterSet):
         fields = ['category', 'game_version', 'status', 'author']
 
     def filter_search(self, queryset, name, value):
-        from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-        
-        # Postgres Full-Text Search
-        vector = SearchVector('title', weight='A') + \
-                 SearchVector('description', weight='B') + \
-                 SearchVector('author__username', weight='C')
-        
-        query = SearchQuery(value)
-        
-        return queryset.annotate(
-            rank=SearchRank(vector, query)
-        ).filter(rank__gte=0.1).order_by('-rank')
+        if not value:
+            return queryset
+        # Standard Django search (Works on SQLite & Postgres)
+        return queryset.filter(
+            Q(title__icontains=value) | 
+            Q(description__icontains=value) |
+            Q(author__username__icontains=value)
+        )

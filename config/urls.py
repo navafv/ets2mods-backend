@@ -13,14 +13,14 @@ urlpatterns = [
     # Auth Endpoints
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('accounts/', include('allauth.urls')), # Social Auth routes
+    path('accounts/', include('allauth.urls')),
 
-    # App Endpoints (Create urls.py in each app folder later)
+    # App Endpoints
     path('api/users/', include('users.urls')),
-    # path('api/mods/', include('mods.urls')),
-    # path('api/categories/', include('categories.urls')),
-    # path('api/reviews/', include('reviews.urls')),
-    # path('api/forums/', include('forums.urls')),
+    path('api/mods/', include('mods.urls')),
+    path('api/categories/', include('categories.urls')),
+    path('api/reviews/', include('reviews.urls')),
+    path('api/forums/', include('forums.urls')),
     # path('api/analytics/', include('analytics.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

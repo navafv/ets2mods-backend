@@ -37,22 +37,21 @@ class Mod(models.Model):
     game_versions = models.ManyToManyField(GameVersion, related_name='compatible_mods')
     required_dlcs = models.ManyToManyField(DLC, blank=True, related_name='required_by_mods')
 
-    # Compatibility Fields
-    min_game_version = models.CharField(max_length=20, help_text="e.g., 1.48")
+    # Compatibility Fields (Added default="1.0" to fix migration error)
+    min_game_version = models.CharField(max_length=20, help_text="e.g., 1.48", default="1.0")
     conflicts_with = models.ManyToManyField('self', blank=True, symmetrical=True, help_text="Mods known to crash with this one")
     
-    # Files
+    # Files (Added null=True, blank=True to make file optional initially)
     file_url = models.URLField(help_text="External download link (S3/Mega/Drive)")
     file_size = models.CharField(max_length=20, help_text="e.g., 250 MB")
-    file = models.FileField(upload_to='mods/files/')
+    file = models.FileField(upload_to='mods/files/', null=True, blank=True)
     
-    # Metrics (Denormalized for performance)
+    # Metrics
     download_count = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
 
-    # Analytics
-    total_downloads = models.PositiveIntegerField(default=0)
+    # Note: Removed 'total_downloads' as it was redundant with 'download_count'
     
     # Approval
     is_approved = models.BooleanField(default=False)
