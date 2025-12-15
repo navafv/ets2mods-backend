@@ -13,3 +13,4 @@ dj-database-url
 whitenoise
 cloudinary
 django-cloudinary-storage
+django-mptt
