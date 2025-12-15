@@ -1,0 +1,13 @@
+Django>=4.2,<5.0
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-allauth
+python-decouple
+psycopg2-binary
+Pillow  # For handling mod image uploads
+django-filter
+drf-yasg # Optional: for API documentation
+gunicorn
+dj-database-url
+whitenoise
