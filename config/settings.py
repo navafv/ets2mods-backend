@@ -148,3 +148,5 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from mods.models import Mod
 from .models import DownloadLog
 
@@ -13,7 +13,7 @@ class AnalyticsDashboardView(APIView):
         # Get user's mods
         user_mods = Mod.objects.filter(author=user)
         
-        total_downloads = user_mods.aggregateHb(Sum('download_count'))['download_count__sum'] or 0
+        total_downloads = user_mods.aggregate(Sum('download_count'))['download_count__sum'] or 0
         total_mods = user_mods.count()
         
         # Recent downloads (last 10)

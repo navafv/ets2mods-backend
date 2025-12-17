@@ -1,6 +1,6 @@
-from rest_framework import viewsets, permissions, status, decorators
+from rest_framework import viewsets, permissions, decorators
 from rest_framework.response import Response
-from .models import Thread, ForumPost, Notification, ForumCategory
+from .models import Thread, ForumPost, Notification
 from .serializers import ThreadListSerializer, ForumPostSerializer, ForumCategorySerializer
 
 class ThreadViewSet(viewsets.ModelViewSet):
@@ -20,10 +20,18 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        return ForumPost.objects.filter(thread__slug=self.kwargs['thread_slug'])
+        # Check query params instead: /api/forums/posts/?thread_slug=xyz
+        queryset = ForumPost.objects.all()
+        thread_slug = self.kwargs.get('thread_slug') or self.request.query_params.get('thread_slug')
+        
+        if thread_slug:
+            return queryset.filter(thread__slug=thread_slug)
+        return queryset
 
     def perform_create(self, serializer):
-        post = serializer.save(author=self.request.user, thread_id=self.request.data.get('thread_id'))
+        # Ensure thread_id is passed in body
+        thread_id = self.request.data.get('thread_id')
+        post = serializer.save(author=self.request.user, thread_id=thread_id)
         
         # Create Notification if replying
         if post.parent:
@@ -34,7 +42,7 @@ class PostViewSet(viewsets.ModelViewSet):
             )
 
     @decorators.action(detail=True, methods=['post'])
-    def like(self, request, pk=None, thread_slug=None):
+    def like(self, request, pk=None):
         post = self.get_object()
         if post.likes.filter(id=request.user.id).exists():
             post.likes.remove(request.user)
