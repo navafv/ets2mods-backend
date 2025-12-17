@@ -19,7 +19,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password']
         )
-        # Signal to send email verification could go here
         return user
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -50,8 +49,10 @@ class SetNewPasswordSerializer(serializers.Serializer):
             uidb64 = attrs.get('uidb64')
             id = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(id=id)
+            
             if not PasswordResetTokenGenerator().check_token(user, token):
                 raise serializers.ValidationError('The reset link is invalid', 401)
+            
             user.set_password(password)
             user.save()
             return user

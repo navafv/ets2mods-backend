@@ -1,7 +1,9 @@
-from rest_framework import viewsets, permissions, decorators
+from rest_framework import viewsets, permissions, decorators, status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from django.db.models import F
 from .models import Thread, ForumPost, Notification
-from .serializers import ThreadListSerializer, ForumPostSerializer, ForumCategorySerializer
+from .serializers import ThreadListSerializer, ForumPostSerializer
 
 class ThreadViewSet(viewsets.ModelViewSet):
     queryset = Thread.objects.all().order_by('-is_pinned', '-created_at')
@@ -10,9 +12,8 @@ class ThreadViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Increment View Count
-        instance.view_count += 1
-        instance.save()
+        Thread.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
+        instance.refresh_from_db()
         return super().retrieve(request, *args, **kwargs)
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -20,21 +21,23 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        # Check query params instead: /api/forums/posts/?thread_slug=xyz
         queryset = ForumPost.objects.all()
         thread_slug = self.kwargs.get('thread_slug') or self.request.query_params.get('thread_slug')
-        
         if thread_slug:
             return queryset.filter(thread__slug=thread_slug)
         return queryset
 
     def perform_create(self, serializer):
-        # Ensure thread_id is passed in body
         thread_id = self.request.data.get('thread_id')
+        
+        if not thread_id:
+            raise ValidationError({"thread_id": "This field is required."})
+
+        # Save the post
         post = serializer.save(author=self.request.user, thread_id=thread_id)
         
-        # Create Notification if replying
-        if post.parent:
+        # Send notification to parent author if this is a reply
+        if post.parent and post.parent.author != self.request.user:
             Notification.objects.create(
                 recipient=post.parent.author,
                 message=f"{self.request.user.username} replied to your comment",
@@ -46,6 +49,8 @@ class PostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
         if post.likes.filter(id=request.user.id).exists():
             post.likes.remove(request.user)
+            action = 'removed'
         else:
             post.likes.add(request.user)
-        return Response({'status': 'ok'})
+            action = 'added'
+        return Response({'status': action})

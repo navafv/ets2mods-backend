@@ -1,31 +1,46 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum
+from rest_framework.permissions import IsAdminUser
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDate
 from mods.models import Mod
 from .models import DownloadLog
 
-class AnalyticsDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+
+class AdminAnalyticsView(APIView):
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
-        user = request.user
-        # Get user's mods
-        user_mods = Mod.objects.filter(author=user)
-        
-        total_downloads = user_mods.aggregate(Sum('download_count'))['download_count__sum'] or 0
-        total_mods = user_mods.count()
-        
-        # Recent downloads (last 10)
-        recent_logs = DownloadLog.objects.filter(mod__author=user).order_by('-timestamp')[:10]
-        recent_data = [{
-            'mod': log.mod.title,
-            'ip': log.ip_address,
-            'date': log.timestamp
-        } for log in recent_logs]
+        # 📊 Downloads per day (last 30 days)
+        downloads_per_day = (
+            DownloadLog.objects
+            .annotate(day=TruncDate('timestamp'))
+            .values('day')
+            .annotate(count=Count('id'))
+            .order_by('day')
+        )
+
+        # 📦 Mods per category
+        mods_by_category = (
+            Mod.objects
+            .values('category__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # 👤 Top authors
+        top_authors = (
+            Mod.objects
+            .values('author__username')
+            .annotate(
+                mods=Count('id'),
+                downloads=Sum('download_count')
+            )
+            .order_by('-downloads')[:5]
+        )
 
         return Response({
-            'total_downloads': total_downloads,
-            'total_mods': total_mods,
-            'recent_downloads': recent_data
+            'downloads_per_day': list(downloads_per_day),
+            'mods_by_category': list(mods_by_category),
+            'top_authors': list(top_authors),
         })

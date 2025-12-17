@@ -16,8 +16,12 @@ class Review(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'mod') # 1. One review per user per mod
+        unique_together = ('user', 'mod')
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['mod', 'created_at']),
+            models.Index(fields=['rating']),
+        ]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

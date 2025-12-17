@@ -7,6 +7,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.conf import settings
+import logging
 
 from .serializers import (
     UserRegistrationSerializer, 
@@ -16,6 +17,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -37,31 +39,31 @@ class PasswordResetRequestView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             user = User.objects.filter(email=email).first()
+            
             if user:
-                # IMPLEMENTED: Generate token and send email
                 token = default_token_generator.make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 
-                # Construct link (Assumes frontend is on localhost:5173 or configured URL)
-                # You should ideally put the frontend URL in settings.py
                 frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-                reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
+                # Use a standard clean URL structure
+                reset_link = f"{frontend_url}/reset-password?uid={uid}&token={token}"
                 
-                # Send email
                 try:
                     send_mail(
                         'Password Reset Request - ETS2 Mods',
                         f'Click the following link to reset your password: {reset_link}',
-                        settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@ets2mods.vercel.app',
+                        settings.DEFAULT_FROM_EMAIL,
                         [email],
                         fail_silently=False,
                     )
                 except Exception as e:
-                    # In production, log this error. In dev, we might see it in console.
-                    print(f"Error sending email: {e}")
-                    
-            # Return success even if user not found (security practice)
+                    logger.error(f"Failed to send password reset email to {email}: {e}")
+                    # In production, do not reveal if email sending failed to prevent enumeration,
+                    # but for debugging it's useful to know.
+            
+            # Always return the same message to prevent email enumeration
             return Response({'message': 'If an account with this email exists, a reset link has been sent.'})
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetConfirmView(generics.GenericAPIView):

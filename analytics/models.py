@@ -11,7 +11,8 @@ class DownloadLog(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['mod', 'ip_address', 'timestamp']),
+            models.Index(fields=['mod', 'timestamp']),
+            models.Index(fields=['ip_address']),
         ]
 
     def __str__(self):
