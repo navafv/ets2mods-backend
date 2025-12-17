@@ -14,7 +14,3 @@ whitenoise
 cloudinary
 django-cloudinary-storage
 django-mptt
-django-extensions  # Useful for development
-django-debug-toolbar  # Debugging
-python-magic  # File validation
-django-cleanup  # Auto-delete old files

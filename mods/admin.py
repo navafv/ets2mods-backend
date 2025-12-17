@@ -16,6 +16,7 @@ class ModAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
     inlines = [DownloadLinkInline, ModImageInline]
     actions = ['approve_mods', 'reject_mods']
+    prepopulated_fields = {"slug": ("title",)}
 
     @admin.action(description='Approve selected mods (Publish)')
     def approve_mods(self, request, queryset):

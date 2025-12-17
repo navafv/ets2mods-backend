@@ -36,9 +36,26 @@ class Mod(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            # Create a unique slug using title and a snippet of UUID
+            # 1. Generate the base slug
             base_slug = slugify(self.title)
-            self.slug = f"{base_slug}-{str(self.id)[:8]}"
+            
+            # 2. Handle cases where slugify returns empty (e.g., non-English titles)
+            if not base_slug:
+                # Fallback to using the UUID or a default string
+                base_slug = f"mod-{str(self.id)[:8]}"
+
+            # 3. Ensure Uniqueness (Handle duplicate titles)
+            slug = base_slug
+            counter = 1
+            
+            # Keep checking if this slug exists in the DB
+            # We exclude the current ID to allow updating the same object without error
+            while Mod.objects.filter(slug=slug).exclude(id=self.id).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            
+            self.slug = slug
+            
         super().save(*args, **kwargs)
 
     def __str__(self):
