@@ -16,12 +16,14 @@ class ModViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ModFilter
     search_fields = ['title', 'description', 'uploader_name']
-    ordering_fields = ['created_at', 'view_count']
+    ordering_fields = ['created_at', 'view_count', 'average_rating']
 
     def get_queryset(self):
-        # Admins see everything, Public sees only Published
+        # Admins can see everything in lists
         if self.request.user.is_staff:
             return Mod.objects.all()
+            
+        # Public list only shows Published mods
         return Mod.objects.filter(status='published')
 
     def get_serializer_class(self):
@@ -45,12 +47,27 @@ class ModViewSet(viewsets.ModelViewSet):
         serializer.save(uploader_ip=ip_address)
 
     def retrieve(self, request, *args, **kwargs):
-        # Increment view count on retrieve
         instance = self.get_object()
+        
+        # Increment view count on retrieve
         Mod.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
         instance.refresh_from_db()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def approve(self, request, slug=None):
+        mod = self.get_object()
+        mod.status = 'published'
+        mod.save()
+        return Response({'status': 'published'})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def reject(self, request, slug=None):
+        mod = self.get_object()
+        mod.status = 'rejected'
+        mod.save()
+        return Response({'status': 'rejected'})
 
 class ModImageViewSet(viewsets.ModelViewSet):
     """Separate endpoint to upload images for a specific mod"""
@@ -70,4 +87,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         mod_id = self.request.data.get('mod_id')
         if mod_id:
-            serializer.save(mod_id=mod_id)
+            instance = serializer.save(mod_id=mod_id)
+            # Update mod rating
+            instance.mod.calculate_rating()

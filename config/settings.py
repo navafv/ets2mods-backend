@@ -2,6 +2,7 @@ from pathlib import Path
 from decouple import config
 import dj_database_url
 import os
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,15 +21,17 @@ INSTALLED_APPS = [
     
     # Third-party
     'rest_framework',
+    'rest_framework_simplejwt',  # Make sure this is here if you installed it
     'corsheaders',
     'django_filters',
-    'cloudinary', # Optional: if you use cloudinary for images
+    'cloudinary',
     'cloudinary_storage',
 
     # Local Apps
-    'core',       # For users/admin user model
+    'core',
     'mods',
     'categories',
+    # 'tutorials', # Removed
 ]
 
 MIDDLEWARE = [
@@ -70,7 +73,7 @@ DATABASES = {
     )
 }
 
-# Custom User Model (Only for Admins now)
+# Custom User Model
 AUTH_USER_MODEL = 'core.User'
 
 LANGUAGE_CODE = 'en-us'
@@ -83,7 +86,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Cloudinary / File Storage (Optional, defaults to local for dev)
+# Cloudinary / File Storage
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': config('CLOUDINARY_API_KEY'),
@@ -92,12 +95,20 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', # Public by default
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend', 'rest_framework.filters.SearchFilter', 'rest_framework.filters.OrderingFilter'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

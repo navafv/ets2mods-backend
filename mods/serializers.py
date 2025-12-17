@@ -14,7 +14,7 @@ class ModImageSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'user_name', 'content', 'created_at']
+        fields = ['id', 'user_name', 'content', 'rating', 'created_at']
 
 class ModListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for lists (cover image only)"""
@@ -23,7 +23,7 @@ class ModListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Mod
-        fields = ['id', 'title', 'slug', 'uploader_name', 'cover_image', 'category_name', 'created_at', 'view_count']
+        fields = ['id', 'title', 'slug', 'uploader_name', 'cover_image', 'category_name', 'created_at', 'view_count', 'average_rating', 'rating_count', 'status']
 
     def get_cover_image(self, obj):
         cover = obj.images.filter(is_cover=True).first()
@@ -44,7 +44,6 @@ class ModDetailSerializer(serializers.ModelSerializer):
 
 class ModCreateSerializer(serializers.ModelSerializer):
     """Serializer for uploading (creating) a mod"""
-    # We accept links as a JSON string or list in the request
     download_links = serializers.ListField(
         child=serializers.DictField(), write_only=True
     )

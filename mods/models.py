@@ -1,13 +1,14 @@
 from django.db import models
 from django.utils.text import slugify
 from categories.models import Category
+from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 
 class Mod(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending Approval'),
         ('published', 'Published'),
-        # Rejected mods are simply deleted to save space
+        ('rejected', 'Rejected'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -18,7 +19,6 @@ class Mod(models.Model):
     # Content
     description = models.TextField()
     uploader_name = models.CharField(max_length=100, default="Anonymous", help_text="Name displayed as the uploader")
-    # Added fields for tracking
     uploader_email = models.EmailField(blank=True, null=True, help_text="Private email for contact/tracking")
     uploader_ip = models.GenericIPAddressField(blank=True, null=True, help_text="Uploader's IP address")
     
@@ -32,35 +32,40 @@ class Mod(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Counters (Simple implementation)
+    # Counters
     view_count = models.PositiveIntegerField(default=0)
+    
+    # Rating Cache (Calculated on Comment save)
+    average_rating = models.FloatField(default=0.0)
+    rating_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            # 1. Generate the base slug
             base_slug = slugify(self.title)
-            
-            # 2. Handle cases where slugify returns empty (e.g., non-English titles)
             if not base_slug:
-                # Fallback to using the UUID or a default string
                 base_slug = f"mod-{str(self.id)[:8]}"
-
-            # 3. Ensure Uniqueness (Handle duplicate titles)
             slug = base_slug
             counter = 1
-            
-            # Keep checking if this slug exists in the DB
-            # We exclude the current ID to allow updating the same object without error
             while Mod.objects.filter(slug=slug).exclude(id=self.id).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
-            
             self.slug = slug
-            
         super().save(*args, **kwargs)
+
+    def calculate_rating(self):
+        reviews = self.comments.filter(rating__gt=0)
+        count = reviews.count()
+        if count > 0:
+            avg = reviews.aggregate(models.Avg('rating'))['rating__avg']
+            self.average_rating = round(avg, 1)
+            self.rating_count = count
+        else:
+            self.average_rating = 0.0
+            self.rating_count = 0
+        self.save(update_fields=['average_rating', 'rating_count'])
 
     def __str__(self):
         return self.title
@@ -80,7 +85,6 @@ class ModImage(models.Model):
     is_cover = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        # Ensure only one cover image per mod
         if self.is_cover:
             ModImage.objects.filter(mod=self.mod, is_cover=True).update(is_cover=False)
         super().save(*args, **kwargs)
@@ -89,6 +93,11 @@ class Comment(models.Model):
     mod = models.ForeignKey(Mod, related_name='comments', on_delete=models.CASCADE)
     user_name = models.CharField(max_length=100, default="Guest")
     content = models.TextField()
+    rating = models.PositiveSmallIntegerField(
+        default=0, 
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        help_text="0 means no rating given"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
