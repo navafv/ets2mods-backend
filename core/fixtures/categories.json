@@ -1,0 +1,122 @@
+[
+  {
+    "model": "categories.category",
+    "pk": 1,
+    "fields": {
+      "name": "Trucks",
+      "slug": "trucks",
+      "description": "New standalone trucks and modifications",
+      "icon": "truck"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 2,
+    "fields": {
+      "name": "Trailers",
+      "slug": "trailers",
+      "description": "New trailers, cargo packs, and skins",
+      "icon": "container"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 3,
+    "fields": {
+      "name": "Maps",
+      "slug": "maps",
+      "description": "Map expansions and standalone maps",
+      "icon": "map"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 4,
+    "fields": {
+      "name": "Interiors",
+      "slug": "interiors",
+      "description": "Custom interiors and cabin accessories",
+      "icon": "armchair"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 5,
+    "fields": {
+      "name": "Sounds",
+      "slug": "sounds",
+      "description": "Engine sounds and environmental audio",
+      "icon": "speaker"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 6,
+    "fields": {
+      "name": "Graphics",
+      "slug": "graphics",
+      "description": "Weather, lighting, and texture mods",
+      "icon": "image"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 7,
+    "fields": {
+      "name": "Skins",
+      "slug": "skins",
+      "description": "Paint jobs for trucks and trailers",
+      "icon": "palette"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 8,
+    "fields": {
+      "name": "Parts & Tuning",
+      "slug": "parts-tuning",
+      "description": "Engines, wheels, and accessories",
+      "icon": "wrench"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 9,
+    "fields": {
+      "name": "Traffic",
+      "slug": "traffic",
+      "description": "AI traffic density and vehicles",
+      "icon": "car"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 10,
+    "fields": {
+      "name": "UI & HUD",
+      "slug": "ui-hud",
+      "description": "Interface and GPS modifications",
+      "icon": "layout"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 11,
+    "fields": {
+      "name": "Physics",
+      "slug": "physics",
+      "description": "Driving physics and suspension",
+      "icon": "activity"
+    }
+  },
+  {
+    "model": "categories.category",
+    "pk": 12,
+    "fields": {
+      "name": "Other",
+      "slug": "other",
+      "description": "Economy mods and utilities",
+      "icon": "more-horizontal"
+    }
+  }
+]

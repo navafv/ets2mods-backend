@@ -18,6 +18,10 @@ class Mod(models.Model):
     # Content
     description = models.TextField()
     uploader_name = models.CharField(max_length=100, default="Anonymous", help_text="Name displayed as the uploader")
+    # Added fields for tracking
+    uploader_email = models.EmailField(blank=True, null=True, help_text="Private email for contact/tracking")
+    uploader_ip = models.GenericIPAddressField(blank=True, null=True, help_text="Uploader's IP address")
+    
     youtube_url = models.URLField(blank=True, null=True, help_text="Embed link for video preview")
     
     # Meta

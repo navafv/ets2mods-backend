@@ -29,7 +29,6 @@ INSTALLED_APPS = [
     'core',       # For users/admin user model
     'mods',
     'categories',
-    'tutorials',
 ]
 
 MIDDLEWARE = [

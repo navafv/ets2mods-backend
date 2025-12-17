@@ -9,7 +9,7 @@ class DownloadLinkSerializer(serializers.ModelSerializer):
 class ModImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModImage
-        fields = ['id', 'image', 'is_cover']
+        fields = ['id', 'mod', 'image', 'is_cover']
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,12 +48,11 @@ class ModCreateSerializer(serializers.ModelSerializer):
     download_links = serializers.ListField(
         child=serializers.DictField(), write_only=True
     )
-    # Images are usually handled via MultiPartParser separately or separate endpoints, 
-    # but to keep it simple, we might upload images after creating the mod ID.
     
     class Meta:
         model = Mod
-        fields = ['title', 'description', 'category', 'uploader_name', 'youtube_url', 'version', 'download_links']
+        fields = ['id', 'slug', 'title', 'description', 'category', 'uploader_name', 'uploader_email', 'youtube_url', 'version', 'download_links']
+        read_only_fields = ['id', 'slug', 'uploader_ip']
 
     def create(self, validated_data):
         links_data = validated_data.pop('download_links', [])

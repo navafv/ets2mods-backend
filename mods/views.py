@@ -2,16 +2,19 @@ from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import F
 from .models import Mod, ModImage, Comment
 from .serializers import (
     ModListSerializer, ModDetailSerializer, ModCreateSerializer, 
     ModImageSerializer, CommentSerializer
 )
+from .filters import ModFilter
 
 class ModViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ModFilter
     search_fields = ['title', 'description', 'uploader_name']
     ordering_fields = ['created_at', 'view_count']
 
@@ -27,6 +30,19 @@ class ModViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return ModCreateSerializer
         return ModDetailSerializer
+
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+    def perform_create(self, serializer):
+        # Capture the uploader's IP address
+        ip_address = self.get_client_ip(self.request)
+        serializer.save(uploader_ip=ip_address)
 
     def retrieve(self, request, *args, **kwargs):
         # Increment view count on retrieve
