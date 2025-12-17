@@ -4,11 +4,8 @@ from django.utils.text import slugify
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True)
-    icon = models.CharField(max_length=50, help_text="Lucide icon name (e.g., 'Truck')")
+    icon = models.CharField(max_length=50, blank=True, help_text="Icon class name")
     description = models.TextField(blank=True)
-
-    class Meta:
-        verbose_name_plural = "Categories"
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -17,3 +14,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name_plural = "Categories"

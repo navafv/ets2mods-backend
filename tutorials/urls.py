@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet
+from .views import TutorialViewSet
 
 router = DefaultRouter()
-router.register(r'', CategoryViewSet)
+router.register(r'', TutorialViewSet)
 urlpatterns = router.urls
